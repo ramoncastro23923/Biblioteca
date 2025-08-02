@@ -1,0 +1,49 @@
+@model IEnumerable<Biblioteca.Models.Locacao>
+
+@{
+    ViewData["Title"] = "Locações";
+}
+
+<h1>Locações</h1>
+
+@if (User.IsInRole("Administrador"))
+{
+    <p>
+        <a asp-action="Create" class="btn btn-primary">Nova Locação</a>
+    </p>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Livro</th>
+            <th>Usuário</th>
+            <th>Data Retirada</th>
+            <th>Data Devolução Prevista</th>
+            <th>Status</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Livro.Titulo)</td>
+                <td>@Html.DisplayFor(modelItem => item.Usuario.Nome)</td>
+                <td>@item.DataRetirada.ToShortDateString()</td>
+                <td>@item.DataDevolucaoPrevista.ToShortDateString()</td>
+                <td>@Html.DisplayFor(modelItem => item.Status)</td>
+                <td>
+                    @if (User.IsInRole("Administrador"))
+                    {
+                        <a asp-action="Devolver" asp-route-id="@item.Id" class="btn btn-sm btn-success">Devolver</a>
+                    }
+                    @if (item.PodeRenovar)
+                    {
+                        <a asp-action="Renovar" asp-route-id="@item.Id" class="btn btn-sm btn-primary">Renovar</a>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
