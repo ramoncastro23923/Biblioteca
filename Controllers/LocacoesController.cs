@@ -1,10 +1,14 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Biblioteca.Models;
-using Biblioteca.Repositorio;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.Rendering; // Adicionado para usar SelectList
+using Biblioteca.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Biblioteca.Repositorio;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace Biblioteca.Controllers
 {
@@ -25,100 +29,202 @@ namespace Biblioteca.Controllers
             _usuarioRepository = usuarioRepository;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            if (User.IsInRole("Administrador"))
+            try
             {
-                return View(_locacaoRepository.GetAll());
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var usuario = await _usuarioRepository.GetByIdAsync(userId);
+
+                if (usuario == null)
+                {
+                    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    TempData["ErrorMessage"] = "Sessão inválida. Por favor, faça login novamente.";
+                    return RedirectToAction("Login", "Account");
+                }
+
+                ICollection<Locacao> locacoes;
+                
+                if (User.IsInRole("Administrador"))
+                {
+                    locacoes = await _locacaoRepository.GetAllWithDetailsAsync();
+                }
+                else
+                {
+                    locacoes = await _locacaoRepository.GetByUsuarioWithDetailsAsync(userId);
+                }
+                
+                return View(locacoes);
             }
-            else
+            catch (Exception ex)
             {
-                var usuario = _usuarioRepository.GetByEmail(User.Identity.Name);
-                return View(_locacaoRepository.GetByUsuario(usuario.Id));
+                TempData["ErrorMessage"] = $"Erro ao carregar locações: {ex.Message}";
+                return RedirectToAction("Index", "Home");
             }
         }
 
-        public IActionResult Create()
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> Create()
         {
-            // Obter apenas livros disponíveis
-            var livrosDisponiveis = _livroRepository.GetAll()
-                                .Where(l => l.QuantidadeDisponivel > 0)
-                                .ToList();
-            
-            // Criar SelectList explicitamente
-            ViewBag.Livros = new SelectList(livrosDisponiveis, "Id", "Titulo");
-            
-            return View();
+            try
+            {
+                var livrosDisponiveis = await _livroRepository.GetDisponiveisAsync();
+                ViewBag.Livros = new SelectList(livrosDisponiveis, "Id", "Titulo");
+                return View();
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Erro ao carregar livros: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Administrador")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Locacao locacao)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var usuario = await _usuarioRepository.GetByIdAsync(userId);
+
+                if (usuario == null)
+                {
+                    TempData["ErrorMessage"] = "Usuário não encontrado";
+                    return RedirectToAction("Login", "Account");
+                }
+
+                if (!await _locacaoRepository.LivroDisponivelAsync(locacao.LivroId))
+                {
+                    ModelState.AddModelError("", "Livro indisponível para locação");
+                }
+
+                if (!await _locacaoRepository.UsuarioPodeLocarAsync(userId))
+                {
+                    ModelState.AddModelError("", "Você atingiu o limite de locações pendentes");
+                }
+
+                if (ModelState.IsValid)
+                {
+                    locacao.UsuarioId = userId;
+                    await _locacaoRepository.AddAsync(locacao);
+                    TempData["SuccessMessage"] = "Locação realizada com sucesso!";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var livrosDisponiveis = await _livroRepository.GetDisponiveisAsync();
+                ViewBag.Livros = new SelectList(livrosDisponiveis, "Id", "Titulo");
+                
+                return View(locacao);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Erro ao criar locação: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> Devolver(int id)
+        {
+            try
+            {
+                var locacao = await _locacaoRepository.GetByIdWithDetailsAsync(id);
+                if (locacao == null)
+                {
+                    TempData["ErrorMessage"] = "Locação não encontrada";
+                    return RedirectToAction(nameof(Index));
+                }
+                return View(locacao);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Erro ao carregar locação: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Administrador")]
+        [ValidateAntiForgeryToken]
+        [ActionName("Devolver")]
+        public async Task<IActionResult> DevolverConfirmed(int id)
+        {
+            try
+            {
+                await _locacaoRepository.DevolverAsync(id);
+                TempData["SuccessMessage"] = "Livro devolvido com sucesso!";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Erro ao devolver livro: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        public async Task<IActionResult> Renovar(int id)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var locacao = await _locacaoRepository.GetByIdWithDetailsAsync(id);
+
+                if (locacao == null)
+                {
+                    TempData["ErrorMessage"] = "Locação não encontrada";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (locacao.UsuarioId != userId && !User.IsInRole("Administrador"))
+                {
+                    TempData["ErrorMessage"] = "Você não tem permissão para renovar esta locação";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (!locacao.PodeRenovar)
+                {
+                    TempData["ErrorMessage"] = "Esta locação não pode ser renovada";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                return View(locacao);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Erro ao carregar locação: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Locacao locacao)
+        [ActionName("Renovar")]
+        public async Task<IActionResult> RenovarConfirmed(int id)
         {
-            var usuario = _usuarioRepository.GetByEmail(User.Identity.Name);
-            if (usuario == null) return NotFound();
-
-            if (!_locacaoRepository.LivroDisponivel(locacao.LivroId))
+            try
             {
-                ModelState.AddModelError("", "Livro indisponível para locação");
-            }
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var locacao = await _locacaoRepository.GetByIdWithDetailsAsync(id);
 
-            if (!_locacaoRepository.UsuarioPodeLocar(usuario.Id))
-            {
-                ModelState.AddModelError("", "Você atingiu o limite de locações pendentes");
-            }
+                if (locacao != null && (locacao.UsuarioId == userId || User.IsInRole("Administrador")))
+                {
+                    await _locacaoRepository.RenovarAsync(id);
+                    TempData["SuccessMessage"] = "Locação renovada com sucesso!";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Você não tem permissão para esta ação";
+                }
 
-            if (ModelState.IsValid)
-            {
-                locacao.UsuarioId = usuario.Id;
-                _locacaoRepository.Add(locacao);
                 return RedirectToAction(nameof(Index));
             }
-
-            // Recarregar a lista de livros disponíveis em caso de erro
-            var livrosDisponiveis = _livroRepository.GetAll()
-                                .Where(l => l.QuantidadeDisponivel > 0)
-                                .ToList();
-            ViewBag.Livros = new SelectList(livrosDisponiveis, "Id", "Titulo");
-            return View(locacao);
-        }
-
-        [Authorize(Roles = "Administrador")]
-        public IActionResult Devolver(int id)
-        {
-            var locacao = _locacaoRepository.GetById(id);
-            if (locacao == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                TempData["ErrorMessage"] = $"Erro ao renovar locação: {ex.Message}";
+                return RedirectToAction(nameof(Index));
             }
-            return View(locacao);
-        }
-
-        [HttpPost, ActionName("Devolver")]
-        [Authorize(Roles = "Administrador")]
-        [ValidateAntiForgeryToken]
-        public IActionResult DevolverConfirmed(int id)
-        {
-            _locacaoRepository.Devolver(id);
-            return RedirectToAction(nameof(Index));
-        }
-
-        public IActionResult Renovar(int id)
-        {
-            var locacao = _locacaoRepository.GetById(id);
-            if (locacao == null)
-            {
-                return NotFound();
-            }
-            return View(locacao);
-        }
-
-        [HttpPost, ActionName("Renovar")]
-        [ValidateAntiForgeryToken]
-        public IActionResult RenovarConfirmed(int id)
-        {
-            _locacaoRepository.Renovar(id);
-            return RedirectToAction(nameof(Index));
         }
     }
 }

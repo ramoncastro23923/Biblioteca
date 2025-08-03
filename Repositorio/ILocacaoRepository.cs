@@ -1,20 +1,20 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Biblioteca.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace Biblioteca.Repositorio
 {
     public interface ILocacaoRepository
     {
-        IEnumerable<Locacao> GetAll();
-        Locacao GetById(int id);
-        IEnumerable<Locacao> GetByUsuario(int usuarioId);
-        IEnumerable<Locacao> GetPendentes();
-        void Add(Locacao locacao);
-        void Update(Locacao locacao);
-        void Devolver(int locacaoId);
-        void Renovar(int locacaoId);
-        bool LivroDisponivel(int livroId);
-        bool UsuarioPodeLocar(int usuarioId);
+        Task<ICollection<Locacao>> GetAllWithDetailsAsync();
+        Task<ICollection<Locacao>> GetByUsuarioWithDetailsAsync(int usuarioId);
+        Task<Locacao> GetByIdWithDetailsAsync(int id);
+        Task<bool> LivroDisponivelAsync(int livroId);
+        Task<bool> UsuarioPodeLocarAsync(int usuarioId);
+        Task AddAsync(Locacao locacao);
+        Task DevolverAsync(int locacaoId);
+        Task RenovarAsync(int locacaoId);
+        Task<IEnumerable<Locacao>> GetPendentesAsync();
+        
     }
 }

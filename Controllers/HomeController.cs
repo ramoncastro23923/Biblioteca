@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Biblioteca.Repositorio;
 using Microsoft.AspNetCore.Authorization;
+using System.Threading.Tasks;
 
 namespace Biblioteca.Controllers
 {
@@ -16,10 +17,14 @@ namespace Biblioteca.Controllers
             _locacaoRepository = locacaoRepository;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            ViewBag.TotalLivros = _livroRepository.GetAll().Count();
-            ViewBag.LocacoesPendentes = _locacaoRepository.GetPendentes().Count();
+            var livros = await _livroRepository.GetAllAsync();
+            var locacoesPendentes = await _locacaoRepository.GetPendentesAsync();
+            
+            ViewBag.TotalLivros = livros.Count();
+            ViewBag.LocacoesPendentes = locacoesPendentes.Count();
+            
             return View();
         }
     }

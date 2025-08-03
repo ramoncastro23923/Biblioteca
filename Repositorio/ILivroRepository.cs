@@ -6,6 +6,7 @@ namespace Biblioteca.Repositorio
 {
     public interface ILivroRepository
     {
+        Task<IEnumerable<Livro>> GetDisponiveisAsync();
         IEnumerable<Livro> GetAll();
         Livro GetById(int id);
         IEnumerable<Livro> Search(string termo);
@@ -13,5 +14,6 @@ namespace Biblioteca.Repositorio
         void Update(Livro livro);
         void Delete(int id);
         bool Exists(int id);
+        Task<IEnumerable<Livro>> GetAllAsync();
     }
 }

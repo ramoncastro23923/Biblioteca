@@ -1,9 +1,10 @@
-using System.Collections.Generic;
-using System.Linq;
-using Biblioteca.Data;
-using Biblioteca.Models;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Biblioteca.Models;
+using Biblioteca.Data;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Biblioteca.Repositorio
 {
@@ -18,29 +19,88 @@ namespace Biblioteca.Repositorio
             _passwordHasher = new PasswordHasher<Usuario>();
         }
 
+        // Métodos assíncronos (já existentes)
+        public async Task<Usuario> GetByEmailAsync(string email)
+        {
+            return await _context.Usuarios
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower().Trim());
+        }
+
+        public async Task<Usuario?> GetByIdAsync(int id)
+{
+             return await _context.Usuarios
+        .AsNoTracking()
+        .FirstOrDefaultAsync(u => u.Id == id);
+}
+
+        public async Task<Usuario> AuthenticateAsync(string email, string senha)
+        {
+            var usuario = await _context.Usuarios
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower().Trim());
+
+            if (usuario == null) return null;
+
+            var result = _passwordHasher.VerifyHashedPassword(usuario, usuario.Senha, senha);
+            return result == PasswordVerificationResult.Success ? usuario : null;
+        }
+
+        public async Task AddAsync(Usuario usuario)
+        {
+            usuario.Senha = _passwordHasher.HashPassword(usuario, usuario.Senha);
+            await _context.Usuarios.AddAsync(usuario);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync(Usuario usuario)
+        {
+            if (!string.IsNullOrEmpty(usuario.Senha))
+            {
+                usuario.Senha = _passwordHasher.HashPassword(usuario, usuario.Senha);
+            }
+            _context.Usuarios.Update(usuario);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario != null)
+            {
+                _context.Usuarios.Remove(usuario);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            return await _context.Usuarios.AnyAsync(u => u.Id == id);
+        }
+
+        // Novos métodos síncronos para implementar a interface
         public IEnumerable<Usuario> GetAll()
         {
-            return _context.Usuarios.ToList();
+            return _context.Usuarios.AsNoTracking().ToList();
         }
 
         public Usuario GetById(int id)
         {
-            return _context.Usuarios.FirstOrDefault(u => u.Id == id);
+            return _context.Usuarios.AsNoTracking().FirstOrDefault(u => u.Id == id);
         }
 
         public Usuario GetByEmail(string email)
         {
-            return _context.Usuarios.FirstOrDefault(u => u.Email == email);
+            return _context.Usuarios.AsNoTracking()
+                .FirstOrDefault(u => u.Email.ToLower() == email.ToLower().Trim());
         }
 
-public void Add(Usuario usuario)
-{
-    Console.WriteLine($"Senha antes do hash: {usuario.Senha}");
-    usuario.Senha = _passwordHasher.HashPassword(usuario, usuario.Senha);
-    Console.WriteLine($"Senha após hash: {usuario.Senha}");
-    _context.Usuarios.Add(usuario);
-    _context.SaveChanges();
-}
+        public void Add(Usuario usuario)
+        {
+            usuario.Senha = _passwordHasher.HashPassword(usuario, usuario.Senha);
+            _context.Usuarios.Add(usuario);
+            _context.SaveChanges();
+        }
 
         public void Update(Usuario usuario)
         {
@@ -54,7 +114,7 @@ public void Add(Usuario usuario)
 
         public void Delete(int id)
         {
-            var usuario = GetById(id);
+            var usuario = _context.Usuarios.Find(id);
             if (usuario != null)
             {
                 _context.Usuarios.Remove(usuario);
@@ -67,36 +127,16 @@ public void Add(Usuario usuario)
             return _context.Usuarios.Any(u => u.Id == id);
         }
 
-public Usuario Authenticate(string email, string senha)
-{
-    // Debug inicial
-    Console.WriteLine($"Iniciando autenticação para: {email}");
-    
-    var usuario = _context.Usuarios
-        .AsNoTracking()
-        .FirstOrDefault(u => u.Email.ToLower() == email.ToLower());
+        public Usuario Authenticate(string email, string senha)
+        {
+            var usuario = _context.Usuarios
+                .AsNoTracking()
+                .FirstOrDefault(u => u.Email.ToLower() == email.ToLower().Trim());
 
-    if (usuario == null)
-    {
-        Console.WriteLine("Usuário não encontrado no banco de dados");
-        return null;
-    }
+            if (usuario == null) return null;
 
-    Console.WriteLine($"Usuário encontrado: {usuario.Nome}");
-    Console.WriteLine($"Hash armazenado: {usuario.Senha}");
-
-    try
-    {
-        var result = _passwordHasher.VerifyHashedPassword(usuario, usuario.Senha, senha);
-        Console.WriteLine($"Resultado da verificação: {result}");
-        
-        return result == PasswordVerificationResult.Success ? usuario : null;
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Erro na verificação: {ex.Message}");
-        return null;
-    }
-}
+            var result = _passwordHasher.VerifyHashedPassword(usuario, usuario.Senha, senha);
+            return result == PasswordVerificationResult.Success ? usuario : null;
+        }
     }
 }

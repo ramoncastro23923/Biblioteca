@@ -8,6 +8,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using System.Linq;
 using System;
+using System.Collections.Generic;
 
 namespace Biblioteca.Controllers
 {
@@ -23,7 +24,6 @@ namespace Biblioteca.Controllers
         [HttpGet]
         public IActionResult Login()
         {
-            // Se o usuário já estiver autenticado, redireciona para Home
             if (User.Identity.IsAuthenticated)
             {
                 return RedirectToAction("Index", "Home");
@@ -42,7 +42,7 @@ namespace Biblioteca.Controllers
                 return View(model);
             }
 
-            var user = _usuarioRepository.Authenticate(model.Email, model.Senha);
+            var user = await _usuarioRepository.AuthenticateAsync(model.Email, model.Senha);
             
             if (user == null)
             {
@@ -54,11 +54,15 @@ namespace Biblioteca.Controllers
             {
                 new Claim(ClaimTypes.Name, user.Nome),
                 new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Role, user.TipoPerfil.ToString())
             };
 
             var claimsIdentity = new ClaimsIdentity(
-                claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                claims, 
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                ClaimTypes.Name,
+                ClaimTypes.Role);
 
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
@@ -70,18 +74,13 @@ namespace Biblioteca.Controllers
                     AllowRefresh = true
                 });
 
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            {
-                return Redirect(returnUrl);
-            }
-            return RedirectToAction("Index", "Home");
+            return LocalRedirect(returnUrl ?? Url.Content("~/"));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
-            // Limpa o cache do navegador antes do logout
             Response.Headers["Cache-Control"] = "no-cache, no-store";
             Response.Headers["Expires"] = "-1";
 
@@ -106,7 +105,7 @@ namespace Biblioteca.Controllers
                     Nome = "Admin Principal",
                     Email = "admin@biblioteca.com",
                     Telefone = "11999999999",
-                    Senha = "Admin123@", // Senha mais segura
+                    Senha = "Admin123@",
                     TipoPerfil = TipoPerfil.Administrador
                 };
 

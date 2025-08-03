@@ -11,20 +11,22 @@ namespace Biblioteca.Models
         Atrasado
     }
 
+
     public class Locacao
     {
+
         [Key]
         public int Id { get; set; }
 
         [Required]
         [ForeignKey("Livro")]
         public int LivroId { get; set; }
-        public Livro Livro { get; set; }
+        public Livro? Livro { get; set; }
 
         [Required]
         [ForeignKey("Usuario")]
         public int UsuarioId { get; set; }
-        public Usuario Usuario { get; set; }
+        public Usuario? Usuario { get; set; }
 
         [Required]
         [DataType(DataType.Date)]

@@ -2,6 +2,7 @@ using Biblioteca.Data;
 using Biblioteca.Repositorio;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,16 +28,33 @@ builder.Services.AddScoped<ILivroRepository, LivroRepository>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<ILocacaoRepository, LocacaoRepository>();
 
-// Configuração de autenticação (MOVIDA PARA ANTES DO builder.Build())
+// Configuração de autenticação
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Account/Login";
         options.AccessDeniedPath = "/Account/AccessDenied";
+        options.LogoutPath = "/Account/Logout";
         options.Cookie.HttpOnly = true;
         options.SlidingExpiration = true;
         options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     });
+
+// Configuração de autorização (movida para antes do builder.Build())
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdmin", policy => 
+        policy.RequireRole("Administrador"));
+});
+
+// Configuração de sessão
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 var app = builder.Build();
 
@@ -54,6 +72,9 @@ app.UseRouting();
 // Middlewares de autenticação/autorização
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Middleware de sessão
+app.UseSession();
 
 // Mapeamento de rotas
 app.MapControllerRoute(

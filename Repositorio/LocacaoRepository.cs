@@ -1,9 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using Biblioteca.Data;
-using Biblioteca.Models;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Biblioteca.Models;
+using Biblioteca.Data;
 
 namespace Biblioteca.Repositorio
 {
@@ -16,65 +16,67 @@ namespace Biblioteca.Repositorio
             _context = context;
         }
 
-        public IEnumerable<Locacao> GetAll()
+        public async Task<ICollection<Locacao>> GetAllWithDetailsAsync()
         {
-            return _context.Locacoes
-                .Include(l => l.Livro)
-                .Include(l => l.Usuario)
-                .ToList();
-        }
-
-        public Locacao GetById(int id)
-        {
-            return _context.Locacoes
-                .Include(l => l.Livro)
-                .Include(l => l.Usuario)
-                .FirstOrDefault(l => l.Id == id);
-        }
-
-        public IEnumerable<Locacao> GetByUsuario(int usuarioId)
-        {
-            return _context.Locacoes
-                .Include(l => l.Livro)
-                .Where(l => l.UsuarioId == usuarioId)
-                .ToList();
-        }
-
-        public IEnumerable<Locacao> GetPendentes()
-        {
-            return _context.Locacoes
+            return await _context.Locacoes
                 .Include(l => l.Livro)
                 .Include(l => l.Usuario)
                 .Where(l => l.Status == StatusLocacao.Pendente || l.Status == StatusLocacao.Atrasado)
-                .ToList();
+                .AsNoTracking()
+                .ToListAsync();
         }
 
-        public void Add(Locacao locacao)
+        public async Task<ICollection<Locacao>> GetByUsuarioWithDetailsAsync(int usuarioId)
         {
-            var livro = _context.Livros.Find(locacao.LivroId);
+            return await _context.Locacoes
+                .Include(l => l.Livro)
+                .Where(l => l.UsuarioId == usuarioId)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<Locacao> GetByIdWithDetailsAsync(int id)
+        {
+            return await _context.Locacoes
+                .Include(l => l.Livro)
+                .Include(l => l.Usuario)
+                .FirstOrDefaultAsync(l => l.Id == id);
+        }
+
+        public async Task<bool> LivroDisponivelAsync(int livroId)
+        {
+            var livro = await _context.Livros.FindAsync(livroId);
+            return livro != null && livro.QuantidadeDisponivel > 0;
+        }
+
+        public async Task<bool> UsuarioPodeLocarAsync(int usuarioId)
+        {
+            var locacoesPendentes = await _context.Locacoes
+                .CountAsync(l => l.UsuarioId == usuarioId &&
+                               (l.Status == StatusLocacao.Pendente || l.Status == StatusLocacao.Atrasado));
+            return locacoesPendentes < 5;
+        }
+
+        public async Task AddAsync(Locacao locacao)
+        {
+            var livro = await _context.Livros.FindAsync(locacao.LivroId);
             if (livro != null && livro.QuantidadeDisponivel > 0)
             {
                 livro.QuantidadeDisponivel--;
                 _context.Livros.Update(livro);
-                
+
                 locacao.Status = StatusLocacao.Pendente;
-                _context.Locacoes.Add(locacao);
-                _context.SaveChanges();
+                await _context.Locacoes.AddAsync(locacao);
+                await _context.SaveChangesAsync();
             }
         }
 
-        public void Update(Locacao locacao)
+        public async Task DevolverAsync(int locacaoId)
         {
-            _context.Locacoes.Update(locacao);
-            _context.SaveChanges();
-        }
-
-        public void Devolver(int locacaoId)
-        {
-            var locacao = GetById(locacaoId);
+            var locacao = await GetByIdWithDetailsAsync(locacaoId);
             if (locacao != null)
             {
-                var livro = _context.Livros.Find(locacao.LivroId);
+                var livro = await _context.Livros.FindAsync(locacao.LivroId);
                 if (livro != null)
                 {
                     livro.QuantidadeDisponivel++;
@@ -84,42 +86,33 @@ namespace Biblioteca.Repositorio
                 locacao.DataDevolucaoReal = DateTime.Now;
                 locacao.Status = StatusLocacao.Devolvido;
 
-                // Calcular multa se houver atraso
                 if (locacao.DataDevolucaoReal > locacao.DataDevolucaoPrevista)
                 {
                     var diasAtraso = (locacao.DataDevolucaoReal.Value - locacao.DataDevolucaoPrevista).Days;
-                    locacao.Multa = diasAtraso * 2.50m; // R$ 2,50 por dia de atraso
+                    locacao.Multa = diasAtraso * 2.50m;
                 }
 
                 _context.Locacoes.Update(locacao);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
         }
 
-        public void Renovar(int locacaoId)
+        public async Task RenovarAsync(int locacaoId)
         {
-            var locacao = GetById(locacaoId);
+            var locacao = await GetByIdWithDetailsAsync(locacaoId);
             if (locacao != null && locacao.PodeRenovar)
             {
                 locacao.DataDevolucaoPrevista = locacao.DataDevolucaoPrevista.AddDays(14);
-                locacao.PodeRenovar = false; // Permite apenas uma renovação
+                locacao.PodeRenovar = false;
                 _context.Locacoes.Update(locacao);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
         }
-
-        public bool LivroDisponivel(int livroId)
-        {
-            var livro = _context.Livros.Find(livroId);
-            return livro != null && livro.QuantidadeDisponivel > 0;
-        }
-
-        public bool UsuarioPodeLocar(int usuarioId)
-        {
-            // Verifica se o usuário tem menos de 5 locações pendentes
-            return _context.Locacoes.Count(l => 
-                l.UsuarioId == usuarioId && 
-                (l.Status == StatusLocacao.Pendente || l.Status == StatusLocacao.Atrasado)) < 5;
-        }
+        public async Task<IEnumerable<Locacao>> GetPendentesAsync()
+{
+    return await _context.Locacoes
+        .Where(l => l.Status == StatusLocacao.Pendente)
+        .ToListAsync();
+}
     }
 }

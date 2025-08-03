@@ -15,6 +15,11 @@ namespace Biblioteca.Repositorio
             _context = context;
         }
 
+public async Task<IEnumerable<Livro>> GetAllAsync()
+{
+    return await _context.Livros.ToListAsync();
+}
+
         public IEnumerable<Livro> GetAll()
         {
             return _context.Livros.ToList();
@@ -59,5 +64,11 @@ namespace Biblioteca.Repositorio
         {
             return _context.Livros.Any(l => l.Id == id);
         }
+        public async Task<IEnumerable<Livro>> GetDisponiveisAsync()
+{
+    return await _context.Livros
+        .Where(l => l.QuantidadeDisponivel > 0)
+        .ToListAsync();
+}
     }
 }
