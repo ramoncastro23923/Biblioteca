@@ -1,10 +1,10 @@
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
-using Biblioteca.Models;
-using Biblioteca.Data;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Biblioteca.Models;
+using Biblioteca.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace Biblioteca.Repositorio
 {
@@ -19,7 +19,18 @@ namespace Biblioteca.Repositorio
             _passwordHasher = new PasswordHasher<Usuario>();
         }
 
-        // Métodos assíncronos (já existentes)
+        public async Task<IEnumerable<Usuario>> GetAllAsync()
+        {
+            return await _context.Usuarios.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<Usuario> GetByIdAsync(int id)
+        {
+            return await _context.Usuarios
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == id);
+        }
+
         public async Task<Usuario> GetByEmailAsync(string email)
         {
             return await _context.Usuarios
@@ -27,19 +38,9 @@ namespace Biblioteca.Repositorio
                 .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower().Trim());
         }
 
-        public async Task<Usuario?> GetByIdAsync(int id)
-{
-             return await _context.Usuarios
-        .AsNoTracking()
-        .FirstOrDefaultAsync(u => u.Id == id);
-}
-
         public async Task<Usuario> AuthenticateAsync(string email, string senha)
         {
-            var usuario = await _context.Usuarios
-                .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower().Trim());
-
+            var usuario = await GetByEmailAsync(email);
             if (usuario == null) return null;
 
             var result = _passwordHasher.VerifyHashedPassword(usuario, usuario.Senha, senha);
@@ -55,11 +56,20 @@ namespace Biblioteca.Repositorio
 
         public async Task UpdateAsync(Usuario usuario)
         {
+            var usuarioExistente = await _context.Usuarios.FindAsync(usuario.Id);
+            if (usuarioExistente == null) return;
+
+            usuarioExistente.Nome = usuario.Nome;
+            usuarioExistente.Email = usuario.Email;
+            usuarioExistente.Telefone = usuario.Telefone;
+            usuarioExistente.TipoPerfil = usuario.TipoPerfil;
+
             if (!string.IsNullOrEmpty(usuario.Senha))
             {
-                usuario.Senha = _passwordHasher.HashPassword(usuario, usuario.Senha);
+                usuarioExistente.Senha = _passwordHasher.HashPassword(usuario, usuario.Senha);
             }
-            _context.Usuarios.Update(usuario);
+
+            _context.Usuarios.Update(usuarioExistente);
             await _context.SaveChangesAsync();
         }
 
@@ -78,23 +88,11 @@ namespace Biblioteca.Repositorio
             return await _context.Usuarios.AnyAsync(u => u.Id == id);
         }
 
-        // Novos métodos síncronos para implementar a interface
-        public IEnumerable<Usuario> GetAll()
-        {
-            return _context.Usuarios.AsNoTracking().ToList();
-        }
-
-        public Usuario GetById(int id)
-        {
-            return _context.Usuarios.AsNoTracking().FirstOrDefault(u => u.Id == id);
-        }
-
-        public Usuario GetByEmail(string email)
-        {
-            return _context.Usuarios.AsNoTracking()
-                .FirstOrDefault(u => u.Email.ToLower() == email.ToLower().Trim());
-        }
-
+        // Implementações síncronas (opcionais)
+        public IEnumerable<Usuario> GetAll() => _context.Usuarios.AsNoTracking().ToList();
+        public Usuario GetById(int id) => _context.Usuarios.AsNoTracking().FirstOrDefault(u => u.Id == id);
+        public Usuario GetByEmail(string email) => _context.Usuarios.AsNoTracking().FirstOrDefault(u => u.Email.ToLower() == email.ToLower().Trim());
+        
         public void Add(Usuario usuario)
         {
             usuario.Senha = _passwordHasher.HashPassword(usuario, usuario.Senha);
@@ -104,11 +102,20 @@ namespace Biblioteca.Repositorio
 
         public void Update(Usuario usuario)
         {
+            var usuarioExistente = _context.Usuarios.Find(usuario.Id);
+            if (usuarioExistente == null) return;
+
+            usuarioExistente.Nome = usuario.Nome;
+            usuarioExistente.Email = usuario.Email;
+            usuarioExistente.Telefone = usuario.Telefone;
+            usuarioExistente.TipoPerfil = usuario.TipoPerfil;
+
             if (!string.IsNullOrEmpty(usuario.Senha))
             {
-                usuario.Senha = _passwordHasher.HashPassword(usuario, usuario.Senha);
+                usuarioExistente.Senha = _passwordHasher.HashPassword(usuario, usuario.Senha);
             }
-            _context.Usuarios.Update(usuario);
+
+            _context.Usuarios.Update(usuarioExistente);
             _context.SaveChanges();
         }
 
@@ -122,17 +129,11 @@ namespace Biblioteca.Repositorio
             }
         }
 
-        public bool Exists(int id)
-        {
-            return _context.Usuarios.Any(u => u.Id == id);
-        }
+        public bool Exists(int id) => _context.Usuarios.Any(u => u.Id == id);
 
         public Usuario Authenticate(string email, string senha)
         {
-            var usuario = _context.Usuarios
-                .AsNoTracking()
-                .FirstOrDefault(u => u.Email.ToLower() == email.ToLower().Trim());
-
+            var usuario = GetByEmail(email);
             if (usuario == null) return null;
 
             var result = _passwordHasher.VerifyHashedPassword(usuario, usuario.Senha, senha);

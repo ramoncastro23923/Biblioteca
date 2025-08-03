@@ -1,0 +1,53 @@
+@model Biblioteca.Models.Locacao
+
+@{
+    ViewData["Title"] = "Confirmar Devolução";
+}
+
+<h1>Confirmar Devolução</h1>
+
+<h3>Tem certeza que deseja devolver este livro?</h3>
+<div>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Livro.Titulo)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Livro.Titulo)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.DataRetirada)
+        </dt>
+        <dd class="col-sm-10">
+            @Model.DataRetirada.ToString("dd/MM/yyyy")
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.DataDevolucaoPrevista)
+        </dt>
+        <dd class="col-sm-10">
+            @Model.DataDevolucaoPrevista.ToString("dd/MM/yyyy")
+        </dd>
+        @if (Model.DataDevolucaoReal > Model.DataDevolucaoPrevista)
+        {
+            <dt class="col-sm-2 text-danger">
+                Dias de Atraso
+            </dt>
+            <dd class="col-sm-10 text-danger">
+                @((Model.DataDevolucaoReal.Value - Model.DataDevolucaoPrevista).Days) dias
+            </dd>
+            <dt class="col-sm-2 text-danger">
+                Multa Calculada
+            </dt>
+            <dd class="col-sm-10 text-danger">
+                @Model.Multa.ToString("C")
+            </dd>
+        }
+    </dl>
+    
+    <form asp-action="Devolver">
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="Confirmar Devolução" class="btn btn-danger" />
+        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>

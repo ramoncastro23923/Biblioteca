@@ -56,6 +56,8 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+builder.Services.AddControllersWithViews();
+
 var app = builder.Build();
 
 // Pipeline de requisições HTTP

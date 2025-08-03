@@ -1,0 +1,58 @@
+@model Biblioteca.Models.Usuario
+
+@{
+    ViewData["Title"] = "Editar Usuário";
+}
+
+<h1>Editar Usuário</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            
+            <div class="form-group">
+                <label asp-for="Nome" class="control-label"></label>
+                <input asp-for="Nome" class="form-control" />
+                <span asp-validation-for="Nome" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="Email" class="control-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="Telefone" class="control-label"></label>
+                <input asp-for="Telefone" class="form-control" />
+                <span asp-validation-for="Telefone" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="Senha" class="control-label">Nova Senha (deixe em branco para manter a atual)</label>
+                <input asp-for="Senha" type="password" class="form-control" />
+                <span asp-validation-for="Senha" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="TipoPerfil" class="control-label"></label>
+                <select asp-for="TipoPerfil" class="form-control" 
+                        asp-items="Html.GetEnumSelectList<TipoPerfil>()">
+                </select>
+                <span asp-validation-for="TipoPerfil" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mt-3">
+                <input type="submit" value="Salvar" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
