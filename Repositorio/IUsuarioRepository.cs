@@ -25,5 +25,6 @@ namespace Biblioteca.Repositorio
         void Delete(int id);
         bool Exists(int id);
         Usuario Authenticate(string email, string senha);
+        IQueryable<Usuario> GetAllQueryable();
     }
 }

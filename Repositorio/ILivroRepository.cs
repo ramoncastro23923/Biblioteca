@@ -15,6 +15,7 @@ namespace Biblioteca.Repositorio
         void Delete(int id);
         bool Exists(int id);
         Task<IEnumerable<Livro>> GetAllAsync();
+        IQueryable<Livro> GetAllQueryable();
         
         // Adicione este método
         Task<IEnumerable<RelatorioLivrosMaisLocados>> GetLivrosMaisLocadosAsync(DateTime? dataInicio, DateTime? dataFim);

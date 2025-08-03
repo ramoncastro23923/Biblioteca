@@ -1,0 +1,46 @@
+@model Biblioteca.Models.EstatisticasGeraisViewModel
+@{
+    ViewData["Title"] = "Estatísticas Gerais";
+}
+
+<div class="container">
+    <h2>@ViewData["Title"]</h2>
+
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-header">Livros Cadastrados</div>
+                <div class="card-body">
+                    <h5 class="card-title">@Model.TotalLivros</h5>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">Usuários Cadastrados</div>
+                <div class="card-body">
+                    <h5 class="card-title">@Model.TotalUsuarios</h5>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-header">Locações Ativas</div>
+                <div class="card-body">
+                    <h5 class="card-title">@Model.LocacoesAtivas</h5>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-danger mb-3">
+                <div class="card-header">Locações Atrasadas</div>
+                <div class="card-body">
+                    <h5 class="card-title">@Model.LocacoesAtrasadas</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

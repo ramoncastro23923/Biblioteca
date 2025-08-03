@@ -44,7 +44,7 @@ namespace Biblioteca.Controllers
 
             var user = await _usuarioRepository.AuthenticateAsync(model.Email, model.Senha);
             
-           if (user == null)
+            if (user == null)
             {
                 ModelState.AddModelError(string.Empty, "Credenciais inválidas");
                 return View(model);
@@ -104,9 +104,9 @@ namespace Biblioteca.Controllers
                     Nome = "Admin Principal",
                     Email = "admin@biblioteca.com",
                     Telefone = "11999999999",
-                    Senha = "Admin123@",
                     TipoPerfil = TipoPerfil.Administrador
                 };
+                admin.Senha = hasher.HashPassword(admin, "Admin123@");
 
                 _usuarioRepository.Add(admin);
                 return Ok("✅ Administrador criado com sucesso");

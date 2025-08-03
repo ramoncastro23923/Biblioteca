@@ -87,6 +87,10 @@ public async Task<IEnumerable<Livro>> GetAllAsync()
                 .ToListAsync();
         }
 
+        public IQueryable<Livro> GetAllQueryable()
+        {
+            return _context.Livros.AsQueryable();
+        }
         public bool Exists(int id)
         {
             return _context.Livros.Any(l => l.Id == id);

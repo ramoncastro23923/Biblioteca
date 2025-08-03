@@ -24,6 +24,11 @@ namespace Biblioteca.Repositorio
             return await _context.Usuarios.AsNoTracking().ToListAsync();
         }
 
+        public IQueryable<Usuario> GetAllQueryable()
+        {
+            return _context.Usuarios.AsQueryable();
+        }
+
         public async Task<Usuario> GetByIdAsync(int id)
         {
             return await _context.Usuarios
