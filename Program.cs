@@ -56,6 +56,8 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+builder.Services.AddScoped<ILocacaoRepository, LocacaoRepository>();
+
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();

@@ -198,6 +198,22 @@ namespace Biblioteca.Controllers
             }
         }
 
+        public async Task<IActionResult> UsuariosMaisAtivos()
+{
+    var usuarios = await _locacaoRepository.GetUsuariosMaisAtivosAsync(null, null);
+    return View(usuarios);
+}
+
+[HttpPost]
+public async Task<IActionResult> UsuariosMaisAtivos(RelatorioFiltroViewModel filtro)
+{
+    var usuarios = await _locacaoRepository.GetUsuariosMaisAtivosAsync(
+        filtro.DataInicio, 
+        filtro.DataFim);
+        
+    return View(usuarios);
+}
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ActionName("Renovar")]

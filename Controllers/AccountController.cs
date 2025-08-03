@@ -44,12 +44,11 @@ namespace Biblioteca.Controllers
 
             var user = await _usuarioRepository.AuthenticateAsync(model.Email, model.Senha);
             
-            if (user == null)
+           if (user == null)
             {
                 ModelState.AddModelError(string.Empty, "Credenciais inválidas");
                 return View(model);
             }
-
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.Nome),
