@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using System.Linq;
+using System;
 
 namespace Biblioteca.Controllers
 {
@@ -22,10 +23,16 @@ namespace Biblioteca.Controllers
         [HttpGet]
         public IActionResult Login()
         {
+            // Se o usuário já estiver autenticado, redireciona para Home
+            if (User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Home");
+            }
             return View(new LoginModel());
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginModel model, string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
@@ -50,25 +57,39 @@ namespace Biblioteca.Controllers
                 new Claim(ClaimTypes.Role, user.TipoPerfil.ToString())
             };
 
+            var claimsIdentity = new ClaimsIdentity(
+                claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)),
+                new ClaimsPrincipal(claimsIdentity),
                 new AuthenticationProperties
                 {
                     IsPersistent = false,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(30)
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(30),
+                    AllowRefresh = true
                 });
 
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
             return RedirectToAction("Index", "Home");
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            // Limpa o cache do navegador antes do logout
+            Response.Headers["Cache-Control"] = "no-cache, no-store";
+            Response.Headers["Expires"] = "-1";
+
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToAction("Login");
+            return RedirectToAction("Login", "Account");
         }
 
+        [HttpGet]
         public IActionResult AccessDenied()
         {
             return View();
@@ -85,12 +106,12 @@ namespace Biblioteca.Controllers
                     Nome = "Admin Principal",
                     Email = "admin@biblioteca.com",
                     Telefone = "11999999999",
-                    Senha = "0", // Será hasheada pelo repositório
+                    Senha = "Admin123@", // Senha mais segura
                     TipoPerfil = TipoPerfil.Administrador
                 };
 
                 _usuarioRepository.Add(admin);
-                return Ok("✅ Administrador criado com senha '0'");
+                return Ok("✅ Administrador criado com sucesso");
             }
             catch (Exception ex)
             {
