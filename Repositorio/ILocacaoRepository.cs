@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Biblioteca.Models;
@@ -15,6 +16,6 @@ namespace Biblioteca.Repositorio
         Task DevolverAsync(int locacaoId);
         Task RenovarAsync(int locacaoId);
         Task<IEnumerable<Locacao>> GetPendentesAsync();
-        
+         Task<IEnumerable<RelatorioLivrosMaisLocados>> GetLivrosMaisLocadosAsync(DateTime? dataInicio, DateTime? dataFim);
     }
 }

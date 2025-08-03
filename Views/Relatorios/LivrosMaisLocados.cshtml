@@ -1,0 +1,28 @@
+@model IEnumerable<Biblioteca.Models.RelatorioLivrosMaisLocados>
+@{
+    ViewData["Title"] = "Livros Mais Locados";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Título</th>
+            <th>Autor</th>
+            <th>Total de Locações</th>
+            <th>Percentual</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Titulo</td>
+                <td>@item.Autor</td>
+                <td>@item.TotalLocacoes</td>
+                <td>@item.Percentual.ToString("N2")%</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Biblioteca.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace Biblioteca.Repositorio
 {
@@ -15,5 +15,8 @@ namespace Biblioteca.Repositorio
         void Delete(int id);
         bool Exists(int id);
         Task<IEnumerable<Livro>> GetAllAsync();
+        
+        // Adicione este método
+        Task<IEnumerable<RelatorioLivrosMaisLocados>> GetLivrosMaisLocadosAsync(DateTime? dataInicio, DateTime? dataFim);
     }
 }

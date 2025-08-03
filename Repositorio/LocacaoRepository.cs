@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -108,11 +109,45 @@ namespace Biblioteca.Repositorio
                 await _context.SaveChangesAsync();
             }
         }
+
         public async Task<IEnumerable<Locacao>> GetPendentesAsync()
-{
-    return await _context.Locacoes
-        .Where(l => l.Status == StatusLocacao.Pendente)
-        .ToListAsync();
-}
+        {
+            return await _context.Locacoes
+                .Where(l => l.Status == StatusLocacao.Pendente)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<RelatorioLivrosMaisLocados>> GetLivrosMaisLocadosAsync(DateTime? dataInicio, DateTime? dataFim)
+        {
+            var query = _context.Locacoes
+                .Include(l => l.Livro)
+                .AsQueryable();
+
+            // Aplicar filtros de data se fornecidos
+            if (dataInicio.HasValue)
+                query = query.Where(l => l.DataRetirada >= dataInicio.Value);
+
+            if (dataFim.HasValue)
+                query = query.Where(l => l.DataRetirada <= dataFim.Value);
+
+            var totalLocacoesPeriodo = await query.CountAsync();
+
+            var resultado = await query
+                .GroupBy(l => new { l.Livro.Id, l.Livro.Titulo, l.Livro.Autor })
+                .Select(g => new RelatorioLivrosMaisLocados
+                {
+                    LivroId = g.Key.Id,
+                    Titulo = g.Key.Titulo,
+                    Autor = g.Key.Autor,
+                    TotalLocacoes = g.Count(),
+                    Percentual = totalLocacoesPeriodo > 0 ? 
+                        (decimal)g.Count() / totalLocacoesPeriodo * 100 : 0
+                })
+                .OrderByDescending(r => r.TotalLocacoes)
+                .Take(20)
+                .ToListAsync();
+
+            return resultado;
+        }
     }
 }

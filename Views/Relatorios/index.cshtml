@@ -1,0 +1,57 @@
+@model Biblioteca.Models.RelatorioFiltroViewModel
+@using Biblioteca.Models
+@{
+    ViewData["Title"] = "Relatório de Livros Mais Locados";
+}
+
+<div class="container">
+    <h2>@ViewData["Title"]</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-filter"></i> Filtros
+        </div>
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="DataInicio" class="form-label"></label>
+                    <input asp-for="DataInicio" class="form-control" type="date" />
+                    <span asp-validation-for="DataInicio" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="DataFim" class="form-label"></label>
+                    <input asp-for="DataFim" class="form-control" type="date" />
+                    <span asp-validation-for="DataFim" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i> Limpar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (ViewBag.Livros != null)
+    {
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-table"></i> Resultados
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <!-- Tabela de resultados -->
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
