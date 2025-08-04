@@ -1,0 +1,21 @@
+<canvas id="statusChart" width="400" height="200"></canvas>
+
+@section Scripts {
+    <script>
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: @Json.Serialize(Model.StatusLabels),
+                datasets: [{
+                    data: @Json.Serialize(Model.StatusData),
+                    backgroundColor: [
+                        '#ffc107',
+                        '#28a745',
+                        '#dc3545'
+                    ]
+                }]
+            }
+        });
+    </script>
+}

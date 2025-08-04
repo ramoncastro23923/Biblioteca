@@ -3,17 +3,16 @@ using Biblioteca.Repositorio;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
+using Microsoft.Extensions.Hosting;
+using System.Threading;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuração do Kestrel
-builder.WebHost.ConfigureKestrel(serverOptions =>
+builder.WebHost.ConfigureKestrel(serverOptions => 
 {
-    serverOptions.ListenAnyIP(5000); // HTTP
-    serverOptions.ListenAnyIP(5001, listenOptions => // HTTPS
-    {
-        listenOptions.UseHttps();
-    });
+    serverOptions.ListenAnyIP(5000);
+    serverOptions.ListenAnyIP(5001, listenOptions => listenOptions.UseHttps());
 });
 
 // Configuração de serviços
@@ -28,10 +27,12 @@ builder.Services.AddScoped<ILivroRepository, LivroRepository>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<ILocacaoRepository, LocacaoRepository>();
 
-// Configuração de autenticação
+// Background Service para cálculo de multas
+builder.Services.AddHostedService<MultasBackgroundService>();
+
+// Configuração de autenticação e autorização
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
+    .AddCookie(options => {
         options.LoginPath = "/Account/Login";
         options.AccessDeniedPath = "/Account/AccessDenied";
         options.LogoutPath = "/Account/Logout";
@@ -41,28 +42,14 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     });
 
-// Configuração de autorização (movida para antes do builder.Build())
-builder.Services.AddAuthorization(options =>
+builder.Services.AddAuthorization(options => 
 {
-    options.AddPolicy("RequireAdmin", policy => 
-        policy.RequireRole("Administrador"));
+    options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Administrador"));
 });
-
-// Configuração de sessão
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
-
-builder.Services.AddScoped<ILocacaoRepository, LocacaoRepository>();
-
-builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Pipeline de requisições HTTP
+// Pipeline de middleware
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -72,15 +59,9 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-
-// Middlewares de autenticação/autorização
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Middleware de sessão
-app.UseSession();
-
-// Mapeamento de rotas
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
@@ -102,3 +83,37 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+// Classe do Background Service
+public class MultasBackgroundService : BackgroundService
+{
+    private readonly IServiceProvider _services;
+    private readonly ILogger<MultasBackgroundService> _logger;
+
+    public MultasBackgroundService(IServiceProvider services, ILogger<MultasBackgroundService> logger)
+    {
+        _services = services;
+        _logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var locacaoRepo = scope.ServiceProvider.GetRequiredService<ILocacaoRepository>();
+                try
+                {
+                    await locacaoRepo.CalcularMultasAtrasadasAsync();
+                    _logger.LogInformation("Multas calculadas em: {time}", DateTime.Now);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Erro ao calcular multas");
+                }
+            }
+            await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
+        }
+    }
+}

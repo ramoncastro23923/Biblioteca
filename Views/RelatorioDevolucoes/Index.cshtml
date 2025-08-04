@@ -1,0 +1,79 @@
+@model IEnumerable<Biblioteca.Models.Locacao>
+
+@{
+    ViewData["Title"] = "Relatório de Devoluções";
+}
+
+<div class="container mt-4">
+    <h2>@ViewData["Title"]</h2>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-filter"></i> Filtros
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Data Início</label>
+                    <input type="date" name="inicio" class="form-control" value="@ViewBag.DataInicio?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Data Fim</label>
+                    <input type="date" name="fim" class="form-control" value="@ViewBag.DataFim?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i> Limpar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="text-end mb-3">
+        <form asp-action="CalcularMultas" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-warning">
+                <i class="fas fa-calculator"></i> Recalcular Multas
+            </button>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Livro</th>
+                    <th>Usuário</th>
+                    <th>Retirada</th>
+                    <th>Devolução Prevista</th>
+                    <th>Devolução Real</th>
+                    <th>Status</th>
+                    <th>Multa</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Livro?.Titulo</td>
+                        <td>@item.Usuario?.Nome</td>
+                        <td>@item.DataRetirada.ToString("dd/MM/yyyy")</td>
+                        <td>@item.DataDevolucaoPrevista.ToString("dd/MM/yyyy")</td>
+                        <td>@item.DataDevolucaoReal?.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <span class="badge @(item.Status == StatusLocacao.Devolvido ? "bg-success" : 
+                                              item.Status == StatusLocacao.Atrasado ? "bg-danger" : "bg-warning")">
+                                @item.Status
+                            </span>
+                        </td>
+                        <td>@item.Multa.ToString("C")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

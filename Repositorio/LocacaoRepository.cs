@@ -17,6 +17,13 @@ namespace Biblioteca.Repositorio
             _context = context;
         }
 
+        // Implementação do método faltante
+        public async Task CalcularMultasAtrasadasAsync()
+        {
+            await _context.Database.ExecuteSqlRawAsync("EXEC sp_CalcularMultasAtrasadas");
+        }
+
+        // Mantenha todos os outros métodos existentes...
         public async Task<ICollection<Locacao>> GetAllWithDetailsAsync()
         {
             return await _context.Locacoes
@@ -26,6 +33,16 @@ namespace Biblioteca.Repositorio
                 .AsNoTracking()
                 .ToListAsync();
         }
+
+        public async Task<ICollection<Locacao>> GetByUsuarioWithDetailsAsync(int usuarioId)
+        {
+            return await _context.Locacoes
+                .Include(l => l.Livro)
+                .Where(l => l.UsuarioId == usuarioId)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
 
             public async Task<IEnumerable<RelatorioUsuariosMaisAtivos>> GetUsuariosMaisAtivosAsync(DateTime? dataInicio, DateTime? dataFim)
         {
@@ -54,15 +71,6 @@ namespace Biblioteca.Repositorio
                 })
                 .OrderByDescending(r => r.TotalLocacoes)
                 .Take(20)
-                .ToListAsync();
-        }
-
-        public async Task<ICollection<Locacao>> GetByUsuarioWithDetailsAsync(int usuarioId)
-        {
-            return await _context.Locacoes
-                .Include(l => l.Livro)
-                .Where(l => l.UsuarioId == usuarioId)
-                .AsNoTracking()
                 .ToListAsync();
         }
 
@@ -102,6 +110,44 @@ namespace Biblioteca.Repositorio
             }
         }
 
+   
+        public async Task RenovarAsync(int locacaoId)
+        {
+            var locacao = await GetByIdWithDetailsAsync(locacaoId);
+            if (locacao != null && locacao.PodeRenovar)
+            {
+                locacao.DataDevolucaoPrevista = locacao.DataDevolucaoPrevista.AddDays(14);
+                locacao.PodeRenovar = false;
+                _context.Locacoes.Update(locacao);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<IEnumerable<Locacao>> GetPendentesAsync()
+        {
+            return await _context.Locacoes
+                .Where(l => l.Status == StatusLocacao.Pendente)
+                .ToListAsync();
+        }
+
+public async Task<IEnumerable<Locacao>> GetDevolucoesAsync(DateTime? inicio, DateTime? fim)
+{
+    var query = _context.Locacoes
+        .Include(l => l.Livro)
+        .Include(l => l.Usuario)
+        .Where(l => l.DataDevolucaoReal.HasValue)
+        .AsQueryable();
+
+    if (inicio.HasValue)
+        query = query.Where(l => l.DataDevolucaoReal >= inicio);
+    
+    if (fim.HasValue)
+        query = query.Where(l => l.DataDevolucaoReal <= fim);
+
+    return await query.OrderByDescending(l => l.DataDevolucaoReal)
+                     .ToListAsync();
+}
+
         public async Task DevolverAsync(int locacaoId)
         {
             var locacao = await GetByIdWithDetailsAsync(locacaoId);
@@ -128,24 +174,6 @@ namespace Biblioteca.Repositorio
             }
         }
 
-        public async Task RenovarAsync(int locacaoId)
-        {
-            var locacao = await GetByIdWithDetailsAsync(locacaoId);
-            if (locacao != null && locacao.PodeRenovar)
-            {
-                locacao.DataDevolucaoPrevista = locacao.DataDevolucaoPrevista.AddDays(14);
-                locacao.PodeRenovar = false;
-                _context.Locacoes.Update(locacao);
-                await _context.SaveChangesAsync();
-            }
-        }
-
-        public async Task<IEnumerable<Locacao>> GetPendentesAsync()
-        {
-            return await _context.Locacoes
-                .Where(l => l.Status == StatusLocacao.Pendente)
-                .ToListAsync();
-        }
         public async Task<IEnumerable<RelatorioLivrosMaisLocados>> GetLivrosMaisLocadosAsync(DateTime? dataInicio, DateTime? dataFim)
         {
             var query = _context.Locacoes

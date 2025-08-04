@@ -71,7 +71,7 @@ namespace Biblioteca.Repositorio
 
             if (!string.IsNullOrEmpty(usuario.Senha))
             {
-                usuarioExistente.Senha = _passwordHasher.HashPassword(usuario, usuario.Senha);
+                usuarioExistente.Senha = _passwordHasher.HashPassword(usuarioExistente, usuario.Senha);
             }
 
             _context.Usuarios.Update(usuarioExistente);

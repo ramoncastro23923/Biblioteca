@@ -18,5 +18,9 @@ namespace Biblioteca.Repositorio
         Task<IEnumerable<Locacao>> GetPendentesAsync();
         Task<IEnumerable<RelatorioUsuariosMaisAtivos>> GetUsuariosMaisAtivosAsync(DateTime? dataInicio, DateTime? dataFim);
         Task<IEnumerable<RelatorioLivrosMaisLocados>> GetLivrosMaisLocadosAsync(DateTime? dataInicio, DateTime? dataFim);
+        
+        // Novos métodos adicionados
+        Task CalcularMultasAtrasadasAsync();
+        Task<IEnumerable<Locacao>> GetDevolucoesAsync(DateTime? inicio, DateTime? fim);
     }
 }

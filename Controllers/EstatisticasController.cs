@@ -27,6 +27,24 @@ namespace Biblioteca.Controllers
             _context = context;
         }
 
+        public async Task<IActionResult> Dashboard()
+{
+    var locacoes = await _context.Locacoes.ToListAsync();
+    
+    var model = new
+    {
+        StatusLabels = new[] { "Pendentes", "Devolvidos", "Atrasados" },
+        StatusData = new[]
+        {
+            locacoes.Count(l => l.Status == StatusLocacao.Pendente),
+            locacoes.Count(l => l.Status == StatusLocacao.Devolvido),
+            locacoes.Count(l => l.Status == StatusLocacao.Atrasado)
+        },
+    };
+
+    return View(model);
+}
+
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> EstatisticasGerais()
         {

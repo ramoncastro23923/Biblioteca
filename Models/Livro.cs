@@ -26,6 +26,7 @@ namespace Biblioteca.Models
 
         [Required(ErrorMessage = "O ISBN é obrigatório")]
         [StringLength(13, MinimumLength = 10, ErrorMessage = "ISBN deve ter 10 ou 13 caracteres")]
+        [RegularExpression(@"^(?:\d{9}[\dXx]|\d{13})$", ErrorMessage = "ISBN inválido")]
         public string? ISBN { get; set; }
 
         [Required(ErrorMessage = "A quantidade disponível é obrigatória")]

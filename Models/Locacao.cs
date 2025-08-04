@@ -11,29 +11,23 @@ namespace Biblioteca.Models
         Atrasado
     }
 
-
     public class Locacao
     {
-
         [Key]
         public int Id { get; set; }
 
-        [Required]
-        [ForeignKey("Livro")]
+        [Required, ForeignKey("Livro")]
         public int LivroId { get; set; }
         public Livro? Livro { get; set; }
 
-        [Required]
-        [ForeignKey("Usuario")]
+        [Required, ForeignKey("Usuario")]
         public int UsuarioId { get; set; }
         public Usuario? Usuario { get; set; }
 
-        [Required]
-        [DataType(DataType.Date)]
+        [Required, DataType(DataType.Date)]
         public DateTime DataRetirada { get; set; } = DateTime.Now;
 
-        [Required]
-        [DataType(DataType.Date)]
+        [Required, DataType(DataType.Date)]
         public DateTime DataDevolucaoPrevista { get; set; } = DateTime.Now.AddDays(14);
 
         [DataType(DataType.Date)]
@@ -45,5 +39,16 @@ namespace Biblioteca.Models
         public decimal Multa { get; set; } = 0;
 
         public bool PodeRenovar { get; set; } = true;
+
+        public void AtualizarStatus()
+        {
+            if (Status == StatusLocacao.Devolvido) return;
+            
+            Status = DataDevolucaoReal.HasValue 
+                ? StatusLocacao.Devolvido
+                : DateTime.Now > DataDevolucaoPrevista 
+                    ? StatusLocacao.Atrasado 
+                    : StatusLocacao.Pendente;
+        }
     }
 }

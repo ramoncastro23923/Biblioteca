@@ -40,15 +40,6 @@ namespace Biblioteca.Controllers
         }
 
         [HttpPost]
-        public IActionResult UsuariosMaisAtivosPost(RelatorioFiltroViewModel filtro)
-        {
-            return RedirectToAction("UsuariosMaisAtivos", new { 
-                dataInicio = filtro.DataInicio, 
-                dataFim = filtro.DataFim 
-            });
-        }
-
-        [HttpPost]
         public async Task<IActionResult> LivrosMaisLocados(RelatorioFiltroViewModel filtro)
         {
             var livros = await _locacaoRepository.GetLivrosMaisLocadosAsync(
