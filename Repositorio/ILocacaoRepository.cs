@@ -14,7 +14,6 @@ namespace Biblioteca.Repositorio
         Task<bool> UsuarioPodeLocarAsync(int usuarioId);
         Task AddAsync(Locacao locacao);
         Task DevolverAsync(int locacaoId);
-
         Task RenovarAsync(int locacaoId);
         Task<IEnumerable<Locacao>> GetPendentesAsync();
         Task<IEnumerable<RelatorioUsuariosMaisAtivos>> GetUsuariosMaisAtivosAsync(DateTime? dataInicio, DateTime? dataFim);

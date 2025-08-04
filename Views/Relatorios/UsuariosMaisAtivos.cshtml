@@ -13,13 +13,13 @@
         <div class="card-body">
             <form asp-action="UsuariosMaisAtivosPost" method="post" class="row g-3">
                 <div class="col-md-4">
-                    <label for="dataInicio" class="form-label">Data Início</label>
-                    <input type="date" class="form-control" id="dataInicio" name="dataInicio" 
+                    <label asp-for="@Model.First().DataInicio" class="form-label">Data Início</label>
+                    <input type="date" class="form-control" name="DataInicio" 
                            value="@ViewBag.DataInicio">
                 </div>
                 <div class="col-md-4">
-                    <label for="dataFim" class="form-label">Data Fim</label>
-                    <input type="date" class="form-control" id="dataFim" name="dataFim" 
+                    <label asp-for="@Model.First().DataFim" class="form-label">Data Fim</label>
+                    <input type="date" class="form-control" name="DataFim" 
                            value="@ViewBag.DataFim">
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
@@ -69,9 +69,6 @@
 @section Scripts {
     <script>
         $(document).ready(function() {
-            // Inicializa os tooltips
-            $('[data-toggle="tooltip"]').tooltip();
-            
             // Formata as datas para o padrão do input date
             function formatDateForInput(dateString) {
                 if (!dateString) return '';
@@ -79,8 +76,8 @@
                 return date.toISOString().split('T')[0];
             }
             
-            $('#dataInicio').val(formatDateForInput('@ViewBag.DataInicio'));
-            $('#dataFim').val(formatDateForInput('@ViewBag.DataFim'));
+            $('input[name="DataInicio"]').val(formatDateForInput('@ViewBag.DataInicio'));
+            $('input[name="DataFim"]').val(formatDateForInput('@ViewBag.DataFim'));
         });
     </script>
 }

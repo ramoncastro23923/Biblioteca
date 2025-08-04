@@ -18,5 +18,12 @@ namespace Biblioteca.Models
         [Display(Name = "Percentual")]
         [DisplayFormat(DataFormatString = "{0:N2}%")]
         public decimal Percentual { get; set; }
+
+        // Propriedades para filtro
+        [DataType(DataType.Date)]
+        public DateTime? DataInicio { get; set; }
+        
+        [DataType(DataType.Date)]
+        public DateTime? DataFim { get; set; }
     }
 }

@@ -27,6 +27,36 @@ namespace Biblioteca.Repositorio
                 .ToListAsync();
         }
 
+            public async Task<IEnumerable<RelatorioUsuariosMaisAtivos>> GetUsuariosMaisAtivosAsync(DateTime? dataInicio, DateTime? dataFim)
+        {
+            var query = _context.Locacoes
+                .Include(l => l.Usuario)
+                .AsQueryable();
+
+            if (dataInicio.HasValue)
+                query = query.Where(l => l.DataRetirada >= dataInicio.Value);
+
+            if (dataFim.HasValue)
+                query = query.Where(l => l.DataRetirada <= dataFim.Value);
+
+            var totalLocacoesPeriodo = await query.CountAsync();
+
+            return await query
+                .GroupBy(l => new { l.Usuario.Id, l.Usuario.Nome, l.Usuario.Email })
+                .Select(g => new RelatorioUsuariosMaisAtivos
+                {
+                    UsuarioId = g.Key.Id,
+                    Nome = g.Key.Nome,
+                    Email = g.Key.Email,
+                    TotalLocacoes = g.Count(),
+                    Percentual = totalLocacoesPeriodo > 0 ? 
+                        (decimal)g.Count() / totalLocacoesPeriodo * 100 : 0
+                })
+                .OrderByDescending(r => r.TotalLocacoes)
+                .Take(20)
+                .ToListAsync();
+        }
+
         public async Task<ICollection<Locacao>> GetByUsuarioWithDetailsAsync(int usuarioId)
         {
             return await _context.Locacoes
@@ -116,40 +146,6 @@ namespace Biblioteca.Repositorio
                 .Where(l => l.Status == StatusLocacao.Pendente)
                 .ToListAsync();
         }
-
-        public async Task<IEnumerable<RelatorioUsuariosMaisAtivos>> GetUsuariosMaisAtivosAsync(DateTime? dataInicio, DateTime? dataFim)
-        {
-            var query = _context.Locacoes
-                .Include(l => l.Usuario)
-                .AsQueryable();
-
-            // Aplicar filtros de data
-            if (dataInicio.HasValue)
-                query = query.Where(l => l.DataRetirada >= dataInicio.Value);
-
-            if (dataFim.HasValue)
-                query = query.Where(l => l.DataRetirada <= dataFim.Value);
-
-            var totalLocacoesPeriodo = await query.CountAsync();
-
-            var resultado = await query
-                .GroupBy(l => new { l.Usuario.Id, l.Usuario.Nome, l.Usuario.Email })
-                .Select(g => new RelatorioUsuariosMaisAtivos
-                {
-                    UsuarioId = g.Key.Id,
-                    Nome = g.Key.Nome,
-                    Email = g.Key.Email,
-                    TotalLocacoes = g.Count(),
-                    Percentual = totalLocacoesPeriodo > 0 ?
-                        (decimal)g.Count() / totalLocacoesPeriodo * 100 : 0
-                })
-                .OrderByDescending(r => r.TotalLocacoes)
-                .Take(20)
-                .ToListAsync();
-
-            return resultado;
-        }
-
         public async Task<IEnumerable<RelatorioLivrosMaisLocados>> GetLivrosMaisLocadosAsync(DateTime? dataInicio, DateTime? dataFim)
         {
             var query = _context.Locacoes

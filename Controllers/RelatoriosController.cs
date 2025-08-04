@@ -30,16 +30,6 @@ namespace Biblioteca.Controllers
             return View(livros);
         }
 
-        public IActionResult EstatisticasGerais()
-        {
-            var viewModel = new EstatisticasGeraisViewModel {
-                TotalLivros = _livroRepository.GetAll().Count(),
-                TotalUsuarios = _usuarioRepository.GetAll().Count(),
-            };
-            
-            return View(viewModel);
-        }
-
         public async Task<IActionResult> UsuariosMaisAtivos(DateTime? dataInicio, DateTime? dataFim)
         {
             ViewBag.DataInicio = dataInicio?.ToString("yyyy-MM-dd");
@@ -50,9 +40,12 @@ namespace Biblioteca.Controllers
         }
 
         [HttpPost]
-        public IActionResult UsuariosMaisAtivosPost(DateTime? dataInicio, DateTime? dataFim)
+        public IActionResult UsuariosMaisAtivosPost(RelatorioFiltroViewModel filtro)
         {
-            return RedirectToAction("UsuariosMaisAtivos", new { dataInicio, dataFim });
+            return RedirectToAction("UsuariosMaisAtivos", new { 
+                dataInicio = filtro.DataInicio, 
+                dataFim = filtro.DataFim 
+            });
         }
 
         [HttpPost]
@@ -63,6 +56,16 @@ namespace Biblioteca.Controllers
                 filtro.DataFim);
                 
             return View(livros);
+        }
+
+        public IActionResult EstatisticasGerais()
+        {
+            var viewModel = new EstatisticasGeraisViewModel {
+                TotalLivros = _livroRepository.GetAll().Count(),
+                TotalUsuarios = _usuarioRepository.GetAll().Count(),
+            };
+            
+            return View(viewModel);
         }
     }
 }
