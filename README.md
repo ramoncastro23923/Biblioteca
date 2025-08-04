@@ -1,5 +1,3 @@
-Aqui está o README atualizado com a string de conexão para MS SQL LocalDB:
-
 # README - Sistema de Biblioteca Digital
 
 ## 📖 Visão Geral
@@ -71,5 +69,3 @@ sqlcmd -S (localdb)\mssqllocaldb -d Biblioteca -Q "SELECT TABLE_NAME FROM INFORM
 ```bash
 sqlcmd -S (localdb)\mssqllocaldb -d Biblioteca -Q "BACKUP DATABASE [Biblioteca] TO DISK='C:\temp\Biblioteca.bak' WITH FORMAT"
 ```
-
-Este README agora está otimizado para desenvolvimento local com LocalDB, que é a opção mais simples para começar a trabalhar rapidamente com o projeto.
