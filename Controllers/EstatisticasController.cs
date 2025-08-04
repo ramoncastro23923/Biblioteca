@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System;
+using System.Collections.Generic;
 
 namespace Biblioteca.Controllers
 {
@@ -33,7 +34,7 @@ namespace Biblioteca.Controllers
         public async Task<IActionResult> Dashboard()
         {
             var locacoes = await _context.Locacoes.ToListAsync();
-            
+
             var model = new DashboardViewModel
             {
                 StatusLocacoes = new[]
@@ -59,7 +60,12 @@ namespace Biblioteca.Controllers
                 },
                 LocacoesPorMes = await GetLocacoesUltimosMeses(6),
                 TopLivros = await _locacaoRepository.GetLivrosMaisLocadosAsync(DateTime.Now.AddMonths(-6), DateTime.Now),
-                TopUsuarios = await _locacaoRepository.GetUsuariosMaisAtivosAsync(DateTime.Now.AddMonths(-6), DateTime.Now)
+                TotalLivros = await _livroRepository.GetAllQueryable().CountAsync(),
+                LocacoesAtivas = (await _locacaoRepository.GetPendentesAsync()).Count(),
+                LocacoesAtrasadas = await _context.Locacoes.CountAsync(l => l.Status == StatusLocacao.Atrasado),
+                MultasPendentes = await _context.Locacoes
+                            .Where(l => l.Status == StatusLocacao.Atrasado && l.Multa > 0)
+                            .SumAsync(l => l.Multa)
             };
 
             return View(model);

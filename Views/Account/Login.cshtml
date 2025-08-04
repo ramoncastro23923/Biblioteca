@@ -1,34 +1,88 @@
 @model Biblioteca.Models.LoginModel
 
 @{
-    ViewData["Title"] = "Login";
+    Layout = "_LayoutLogin";
+    ViewData["Title"] = "Acesso ao Sistema";
 }
 
-<div class="row">
-    <div class="col-md-4 offset-md-4">
-        <h1 class="text-center">Login</h1>
-        <form asp-action="Login">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            
-            <div class="form-group">
-                <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
+<div class="container-fluid">
+    <div class="row justify-content-center align-items-center min-vh-100">
+        <div class="col-lg-4 col-md-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h3 class="card-title text-center mb-0">Acesse sua conta</h3>
+                </div>
+                
+                <div class="card-body p-5">
+                    <form asp-action="Login" id="loginForm">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        
+                        <div class="form-floating mb-3">
+                            <input asp-for="Email" class="form-control" placeholder="nome@exemplo.com" />
+                            <label asp-for="Email"></label>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+                        
+                        <div class="form-floating mb-3">
+                            <input asp-for="Senha" type="password" class="form-control" placeholder="Senha" />
+                            <label asp-for="Senha"></label>
+                            <span asp-validation-for="Senha" class="text-danger small"></span>
+                        </div>
+                        
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>Entrar
+                            </button>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <a asp-action="ForgotPassword" class="text-decoration-none">Esqueceu sua senha?</a>
+                        </div>
+                    </form>
+                </div>
             </div>
-            
-            <div class="form-group">
-                <label asp-for="Senha" class="control-label"></label>
-                <input asp-for="Senha" type="password" class="form-control" />
-                <span asp-validation-for="Senha" class="text-danger"></span>
-            </div>
-            
-            <div class="form-group mt-3">
-                <input type="submit" value="Entrar" class="btn btn-primary w-100" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
+@section Styles {
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .card {
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        .form-control:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+        }
+        /* Adicione esta regra para esconder a navbar */
+        header {
+            display: none;
+        }
+    </style>
+}
+
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Animação suave ao carregar
+            $('.card').hide().fadeIn(500);
+            
+            // Validação em tempo real
+            $('#loginForm').validate({
+                errorClass: 'is-invalid',
+                validClass: 'is-valid',
+                highlight: function(element, errorClass, validClass) {
+                    $(element).addClass(errorClass).removeClass(validClass);
+                },
+                unhighlight: function(element, errorClass, validClass) {
+                    $(element).removeClass(errorClass).addClass(validClass);
+                }
+            });
+        });
+    </script>
 }

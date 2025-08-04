@@ -22,5 +22,6 @@ namespace Biblioteca.Repositorio
         // Novos métodos adicionados
         Task CalcularMultasAtrasadasAsync();
         Task<IEnumerable<Locacao>> GetDevolucoesAsync(DateTime? inicio, DateTime? fim);
+        
     }
 }

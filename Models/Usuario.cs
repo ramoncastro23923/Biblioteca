@@ -26,10 +26,36 @@ namespace Biblioteca.Models
         public string Telefone { get; set; }
 
         [DataType(DataType.Password)]
-          [StringLength(100, MinimumLength = 6, ErrorMessage = "A senha deve ter no mínimo 6 caracteres")]
-          public string? Senha { get; set; }
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "A senha deve ter no mínimo 6 caracteres")]
+        public string? Senha { get; set; }
 
         [Required]
         public TipoPerfil TipoPerfil { get; set; }
+        
+        public class ResetPasswordModel
+{
+    [Required(ErrorMessage = "O e-mail é obrigatório")]
+    [EmailAddress(ErrorMessage = "E-mail inválido")]
+    public string Email { get; set; }
+
+    [Required(ErrorMessage = "O token é obrigatório")]
+    public string Token { get; set; }
+
+    [Required(ErrorMessage = "A nova senha é obrigatória")]
+    [DataType(DataType.Password)]
+    [StringLength(100, MinimumLength = 6, ErrorMessage = "A senha deve ter no mínimo 6 caracteres")]
+    public string NewPassword { get; set; }
+
+    [DataType(DataType.Password)]
+    [Compare("NewPassword", ErrorMessage = "As senhas não coincidem")]
+    public string ConfirmPassword { get; set; }
+}
+
+public class ForgotPasswordModel
+{
+    [Required(ErrorMessage = "O e-mail é obrigatório")]
+    [EmailAddress(ErrorMessage = "E-mail inválido")]
+    public string Email { get; set; }
+}
     }
 }

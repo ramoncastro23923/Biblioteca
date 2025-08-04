@@ -15,7 +15,6 @@ namespace Biblioteca.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Configurações adicionais do modelo
             modelBuilder.Entity<Locacao>()
                 .HasOne(l => l.Livro)
                 .WithMany()
@@ -26,7 +25,6 @@ namespace Biblioteca.Data
                 .WithMany()
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Seed inicial
             modelBuilder.Entity<Usuario>().HasData(
                 new Usuario
                 {
@@ -34,7 +32,7 @@ namespace Biblioteca.Data
                     Nome = "Admin",
                     Email = "admin@biblioteca.com",
                     Telefone = "11999999999",
-                    Senha = "admin123", // Na prática, deve ser hash
+                    Senha = "admin123", 
                     TipoPerfil = TipoPerfil.Administrador
                 }
             );

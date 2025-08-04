@@ -8,6 +8,11 @@ namespace Biblioteca.Models
         public IEnumerable<LocacoesPorMes> LocacoesPorMes { get; set; }
         public IEnumerable<RelatorioLivrosMaisLocados> TopLivros { get; set; }
         public IEnumerable<RelatorioUsuariosMaisAtivos> TopUsuarios { get; set; }
+
+         public int TotalLivros { get; set; }
+        public int LocacoesAtivas { get; set; }
+        public int LocacoesAtrasadas { get; set; }
+        public decimal MultasPendentes { get; set; }
     }
 
     public class StatusLocacaoChart
