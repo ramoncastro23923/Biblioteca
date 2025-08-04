@@ -3,26 +3,88 @@
     ViewData["Title"] = "Livros Mais Locados";
 }
 
-<h1>@ViewData["Title"]</h1>
+<div class="container-fluid">
+    <h1 class="h3 mb-2 text-gray-800">@ViewData["Title"]</h1>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filtros</h6>
+        </div>
+        <div class="card-body">
+            <form asp-action="LivrosMaisLocados" method="post" class="form-inline">
+                <div class="form-group mr-2">
+                    <label class="mr-2">Data Início:</label>
+                    <input type="date" name="filtro.DataInicio" class="form-control" />
+                </div>
+                <div class="form-group mr-2">
+                    <label class="mr-2">Data Fim:</label>
+                    <input type="date" name="filtro.DataFim" class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+            </form>
+        </div>
+    </div>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Título</th>
-            <th>Autor</th>
-            <th>Total de Locações</th>
-            <th>Percentual</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@item.Titulo</td>
-                <td>@item.Autor</td>
-                <td>@item.TotalLocacoes</td>
-                <td>@item.Percentual.ToString("N2")%</td>
-            </tr>
-        }
-    </tbody>
-</table>
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Resultados</h6>
+        </div>
+        <div class="card-body">
+            <div class="chart-bar pt-4 pb-2">
+                <canvas id="livrosMaisLocadosChart"></canvas>
+            </div>
+            
+            <div class="table-responsive mt-4">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Autor</th>
+                            <th>Total de Locações</th>
+                            <th>Percentual</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Titulo</td>
+                                <td>@item.Autor</td>
+                                <td>@item.TotalLocacoes</td>
+                                <td>@item.Percentual.ToString("N2")%</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Gráfico de Barras - Livros Mais Locados
+        var ctx = document.getElementById("livrosMaisLocadosChart");
+        var chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: @Json.Serialize(Model.Select(x => x.Titulo)),
+                datasets: [{
+                    label: 'Total de Locações',
+                    data: @Json.Serialize(Model.Select(x => x.TotalLocacoes)),
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+}

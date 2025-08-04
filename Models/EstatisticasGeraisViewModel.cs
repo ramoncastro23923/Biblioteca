@@ -6,5 +6,6 @@ namespace Biblioteca.Models
         public int TotalUsuarios { get; set; }
         public int LocacoesAtivas { get; set; }
         public int LocacoesAtrasadas { get; set; }
+        public decimal MultasPendentes { get; set; }
     }
 }

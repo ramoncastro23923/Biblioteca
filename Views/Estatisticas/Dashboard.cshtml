@@ -1,0 +1,186 @@
+@model Biblioteca.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container-fluid">
+    <h1 class="h3 mb-2 text-gray-800">Dashboard</h1>
+    
+    <div class="row">
+        <!-- Gráfico de Status das Locações -->
+        <div class="col-xl-6 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Status das Locações</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="statusLocacoesChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        @foreach (var item in Model.StatusLocacoes)
+                        {
+                            <span class="mr-2">
+                                <i class="fas fa-circle" style="color: @item.Cor"></i> @item.Status
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico de Locações por Mês -->
+        <div class="col-xl-6 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Locações nos Últimos 6 Meses</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="locacoesPorMesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Livros Mais Locados -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Top 20 Livros Mais Locados</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Autor</th>
+                            <th>Total de Locações</th>
+                            <th>Percentual</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var livro in Model.TopLivros)
+                        {
+                            <tr>
+                                <td>@livro.Titulo</td>
+                                <td>@livro.Autor</td>
+                                <td>@livro.TotalLocacoes</td>
+                                <td>@livro.Percentual.ToString("N2")%</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Gráfico de Pizza - Status das Locações
+        var ctx = document.getElementById("statusLocacoesChart");
+        var statusLocacoesChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: @Json.Serialize(Model.StatusLocacoes.Select(x => x.Status)),
+                datasets: [{
+                    data: @Json.Serialize(Model.StatusLocacoes.Select(x => x.Quantidade)),
+                    backgroundColor: @Json.Serialize(Model.StatusLocacoes.Select(x => x.Cor)),
+                    hoverBackgroundColor: @Json.Serialize(Model.StatusLocacoes.Select(x => x.Cor)),
+                    hoverBorderColor: "rgba(234, 236, 244, 1)",
+                }],
+            },
+            options: {
+                maintainAspectRatio: false,
+                tooltips: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyFontColor: "#858796",
+                    borderColor: '#dddfeb',
+                    borderWidth: 1,
+                    xPadding: 15,
+                    yPadding: 15,
+                    displayColors: false,
+                    caretPadding: 10,
+                },
+                legend: {
+                    display: false
+                },
+                cutoutPercentage: 80,
+            },
+        });
+
+        // Gráfico de Linhas - Locações por Mês
+        var ctx2 = document.getElementById("locacoesPorMesChart");
+        var locacoesPorMesChart = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: @Json.Serialize(Model.LocacoesPorMes.Select(x => x.MesAno)),
+                datasets: [{
+                    label: "Locações",
+                    lineTension: 0.3,
+                    backgroundColor: "rgba(78, 115, 223, 0.05)",
+                    borderColor: "rgba(78, 115, 223, 1)",
+                    pointRadius: 3,
+                    pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                    pointBorderColor: "rgba(78, 115, 223, 1)",
+                    pointHoverRadius: 3,
+                    pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                    pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                    pointHitRadius: 10,
+                    pointBorderWidth: 2,
+                    data: @Json.Serialize(Model.LocacoesPorMes.Select(x => x.Quantidade)),
+                }],
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    xAxes: [{
+                        gridLines: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            maxTicksLimit: 7
+                        }
+                    }],
+                    yAxes: [{
+                        ticks: {
+                            maxTicksLimit: 5,
+                            padding: 10,
+                            callback: function(value, index, values) {
+                                return value;
+                            }
+                        },
+                        gridLines: {
+                            color: "rgb(234, 236, 244)",
+                            zeroLineColor: "rgb(234, 236, 244)",
+                            drawBorder: false,
+                            borderDash: [2],
+                            zeroLineBorderDash: [2]
+                        }
+                    }],
+                },
+                legend: {
+                    display: false
+                },
+                tooltips: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyFontColor: "#858796",
+                    titleMarginBottom: 10,
+                    titleFontColor: '#6e707e',
+                    titleFontSize: 14,
+                    borderColor: '#dddfeb',
+                    borderWidth: 1,
+                    xPadding: 15,
+                    yPadding: 15,
+                    displayColors: false,
+                    intersect: false,
+                    mode: 'index',
+                    caretPadding: 10,
+                }
+            }
+        });
+    </script>
+}
